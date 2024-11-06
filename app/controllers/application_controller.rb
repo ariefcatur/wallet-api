@@ -1,20 +1,16 @@
 class ApplicationController < ActionController::API
   include JwtAuthentication
 
-  # Skip authentication by default and add it to specific controllers
-  before_action :authenticate_request
+  rescue_from ActiveRecord::RecordNotFound, with: :not_found
+  rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
 
   private
 
-  def authenticate_request
-    header = request.headers['Authorization']
-    header = header.split(' ').last if header
+  def not_found
+    render json: { error: 'Resource not found' }, status: :not_found
+  end
 
-    begin
-      decoded = decode_jwt_token(header)
-      @current_user = User.find(decoded['user_id'])
-    rescue StandardError => e
-      render json: { error: 'Unauthorized' }, status: :unauthorized
-    end
+  def unprocessable_entity(exception)
+    render json: { errors: exception.record.errors.full_messages }, status: :unprocessable_entity
   end
 end

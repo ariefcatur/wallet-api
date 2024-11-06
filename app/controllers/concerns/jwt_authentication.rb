@@ -1,22 +1,22 @@
 module JwtAuthentication
   extend ActiveSupport::Concern
 
-  def generate_jwt_token(user_id)
-    JWT.encode(
-      { user_id: user_id, exp: 24.hours.from_now.to_i },
-      ENV['JWT_SECRET_KEY'] || Rails.application.credentials.jwt_secret_key,
-      'HS256'
-    )
+  included do
+    before_action :authenticate_request
+    attr_reader :current_user
   end
 
-  def decode_jwt_token(token)
-    JWT.decode(
-      token,
-      ENV['JWT_SECRET_KEY'] || Rails.application.credentials.jwt_secret_key,
-      true,
-      algorithm: 'HS256'
-    )[0]
-  rescue JWT::DecodeError
-    nil
+  private
+
+  def authenticate_request
+    header = request.headers['Authorization']
+    header = header.split(' ').last if header
+
+    begin
+      decoded = JsonWebToken.decode(header)
+      @current_user = User.find(decoded[:user_id])
+    rescue ActiveRecord::RecordNotFound, JWT::DecodeError
+      render json: { error: 'Unauthorized' }, status: :unauthorized
+    end
   end
 end
