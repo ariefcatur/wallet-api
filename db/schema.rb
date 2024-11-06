@@ -16,6 +16,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_11_04_091630) do
 
   create_table "stocks", force: :cascade do |t|
     t.string "symbol", null: false
+    t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["symbol"], name: "index_stocks_on_symbol", unique: true
@@ -28,9 +29,10 @@ ActiveRecord::Schema[7.2].define(version: 2024_11_04_091630) do
   end
 
   create_table "transactions", force: :cascade do |t|
-    t.decimal "amount", precision: 10, scale: 2, null: false
     t.bigint "source_wallet_id"
     t.bigint "target_wallet_id"
+    t.integer "amount_cents", null: false
+    t.string "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["source_wallet_id"], name: "index_transactions_on_source_wallet_id"
@@ -48,6 +50,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_11_04_091630) do
   create_table "wallets", force: :cascade do |t|
     t.string "owner_type", null: false
     t.bigint "owner_id", null: false
+    t.integer "balance_cents", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["owner_type", "owner_id"], name: "index_wallets_on_owner"
