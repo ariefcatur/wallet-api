@@ -3,20 +3,8 @@
 A flexible and robust internal wallet system that enables financial transactions between different entities (Users, Teams, Stocks) with proper ACID compliance and validation.
 
 ## Table of Contents
-- [Features](#features)
 - [Setup](#setup)
 - [API Documentation](#api-documentation)
-- [LatestStockPrice Library](#lateststockprice-library)
-
-## Features
-
-- Generic wallet implementation for multiple entity types (Users, Teams, Stocks)
-- ACID-compliant transactional system
-- Balance tracking and calculation
-- Custom authentication system
-- Stock price integration via RapidAPI
-- Comprehensive transaction validation
-- Audit trail for all financial operations
 
 ## Setup
 
@@ -60,104 +48,131 @@ rails server
 ### Authentication
 
 ```
-POST /api/v1/sessions
-```
-
-Request body:
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
+curl --location 'http://localhost:3000/api/v1/login' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "test@example.com",
+    "password": "password123"
+  }'
 ```
 
 Response:
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "expires_at": "2024-12-01T00:00:00Z"
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MzA5NTgzNzZ9.YQ9wZ1f0g5nw_09pbtBEnMJcFhtBjFCDhWZWkew1Vt8",
+    "user": {
+        "id": 1,
+        "email": "test@example.com"
+    }
 }
 ```
 
 ### Wallet Operations
 
-#### Create Transaction
+#### Create Deposit
 
 ```
-POST /api/v1/transactions
-```
-
-Request body:
-```json
-{
-  "source_wallet_id": 1,
-  "target_wallet_id": 2,
-  "amount": 100.00,
-  "transaction_type": "transfer"
-}
+curl --location 'http://localhost:3000/api/v1/wallets/1/deposit' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MzA5NTgzNzZ9.YQ9wZ1f0g5nw_09pbtBEnMJcFhtBjFCDhWZWkew1Vt8' \
+--header 'Content-Type: application/json' \
+--data '{
+    "amount": 100.00
+  }'
 ```
 
 Response:
 ```json
 {
-  "id": 1,
-  "status": "completed",
-  "amount": "100.00",
-  "source_wallet_id": 1,
-  "target_wallet_id": 2,
-  "created_at": "2024-11-05T12:00:00Z"
+    "message": "Transaction successful",
+    "transaction": {
+        "id": 1,
+        "amount": 100.0,
+        "source_wallet_id": null,
+        "target_wallet_id": 1,
+        "created_at": "2024-11-06T06:01:18.236Z"
+    }
 }
 ```
 
-## LatestStockPrice Library
+#### Transfer Money
 
-### Usage
-
-```ruby
-require 'latest_stock_price'
-
-# Initialize client
-client = LatestStockPrice::Client.new(api_key: 'your-rapid-api-key')
-
-# Get single stock price
-price = client.price('AAPL')
-
-# Get multiple stock prices
-prices = client.prices(['AAPL', 'GOOGL'])
-
-# Get all stock prices
-all_prices = client.price_all
+```
+curl --location 'http://localhost:3000/api/v1/wallets/1/transfer' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MzA5NTgzNzZ9.YQ9wZ1f0g5nw_09pbtBEnMJcFhtBjFCDhWZWkew1Vt8' \
+--header 'Content-Type: application/json' \
+--data '{
+    "target_wallet_id": 2,
+    "amount": 25.00
+  }'
 ```
 
-### Implementation
+Response:
+```json
+{
+    "message": "Transaction successful",
+    "transaction": {
+        "id": 2,
+        "amount": 25.0,
+        "source_wallet_id": 1,
+        "target_wallet_id": 2,
+        "created_at": "2024-11-06T06:04:48.410Z"
+    }
+}
+```
 
-```ruby
-# lib/latest_stock_price/client.rb
-module LatestStockPrice
-  class Client
-    BASE_URL = 'https://latest-stock-price.p.rapidapi.com'
-    
-    def initialize(api_key:)
-      @api_key = api_key
-    end
-    
-    def price(symbol)
-      make_request("/price", { symbol: symbol })
-    end
-    
-    def prices(symbols)
-      make_request("/price", { symbols: symbols.join(',') })
-    end
-    
-    def price_all
-      make_request("/any")
-    end
-    
-    private
-    
-    def make_request(endpoint, params = {})
-      # Implementation details
-    end
-  end
-end
+#### Withdraw Money
+
+```
+curl --location 'http://localhost:3000/api/v1/wallets/1/withdraw' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MzA5NTgzNzZ9.YQ9wZ1f0g5nw_09pbtBEnMJcFhtBjFCDhWZWkew1Vt8' \
+--header 'Content-Type: application/json' \
+--data '{
+    "amount": 50.00
+  }'
+```
+
+Response:
+```json
+{
+    "message": "Transaction successful",
+    "transaction": {
+        "id": 3,
+        "amount": 50.0,
+        "source_wallet_id": 1,
+        "target_wallet_id": null,
+        "created_at": "2024-11-06T06:43:56.733Z"
+    }
+}
+```
+
+#### Get Transaction History
+
+```
+curl --location 'http://localhost:3000/api/v1/transactions' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MzA5NTgzNzZ9.YQ9wZ1f0g5nw_09pbtBEnMJcFhtBjFCDhWZWkew1Vt8' \
+--header 'Content-Type: application/json'
+```
+
+Response:
+```json
+[
+    {
+        "id": 1,
+        "source_wallet_id": null,
+        "target_wallet_id": 1,
+        "amount_cents": 10000,
+        "description": null,
+        "created_at": "2024-11-06T06:01:18.236Z",
+        "updated_at": "2024-11-06T06:01:18.236Z"
+    },
+    {
+        "id": 2,
+        "source_wallet_id": 1,
+        "target_wallet_id": 2,
+        "amount_cents": 2500,
+        "description": null,
+        "created_at": "2024-11-06T06:04:48.410Z",
+        "updated_at": "2024-11-06T06:04:48.410Z"
+    }
+]
 ```
